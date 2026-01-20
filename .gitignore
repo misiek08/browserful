@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+coverage/
+.nyc_output/
+.vscode/
+.idea/
+*.tgz

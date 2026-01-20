@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  browserful:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - TOKEN=${BROWSERFUL_TOKEN:-}
+      - ENABLE_CHROMIUM=true
+      - ENABLE_FIREFOX=false
+      - MAX_BROWSERS=5
+      - MAX_CONCURRENT=10
+      - DEFAULT_TIMEOUT=30000
+      - PRE_LAUNCH_BROWSERS=1
+      - LOG_LEVEL=info
+    # No special privileges needed!
+    # No SYS_ADMIN, no seccomp:unconfined
+    security_opt:
+      - no-new-privileges:true
+    # Resource limits for better container management
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Shared memory for browser rendering
+    shm_size: 1gb
+    restart: unless-stopped
+
+  # Alternative: Minimal Chromium-only service
+  browserful-minimal:
+    build:
+      context: .
+      dockerfile: Dockerfile.minimal
+    ports:
+      - "3001:3000"
+    environment:
+      - TOKEN=${BROWSERFUL_TOKEN:-}
+      - MAX_BROWSERS=3
+      - MAX_CONCURRENT=5
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+    shm_size: 512mb
+    restart: unless-stopped
+    profiles:
+      - minimal

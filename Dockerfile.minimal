@@ -1,0 +1,69 @@
+# Browserful Minimal - Chromium only, smallest footprint
+# Runs without SYS_ADMIN capabilities
+
+FROM node:20-alpine
+
+# Install dependencies for Playwright Chromium
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto-emoji
+
+# Tell Playwright to use system Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -S browserful && adduser -S browserful -G browserful \
+    && mkdir -p /home/browserful/Downloads \
+    && chown -R browserful:browserful /home/browserful \
+    && chown -R browserful:browserful /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev for build)
+RUN npm ci
+
+# Copy source
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
+
+# Fix ownership
+RUN chown -R browserful:browserful /app
+
+# Switch to non-root user
+USER browserful
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health/live || exit 1
+
+# Environment defaults - minimal config
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOST=0.0.0.0 \
+    ENABLE_CHROMIUM=true \
+    ENABLE_FIREFOX=false \
+    MAX_BROWSERS=3 \
+    MAX_CONCURRENT=5 \
+    DEFAULT_TIMEOUT=30000 \
+    PRE_LAUNCH_BROWSERS=1
+
+CMD ["node", "dist/index.js"]
