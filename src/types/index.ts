@@ -2,6 +2,11 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 
 export type BrowserType = 'chromium' | 'firefox';
 
+export interface ViewportOptions {
+  width?: number;
+  height?: number;
+}
+
 export interface BrowserInstance {
   id: string;
   browser: Browser;
@@ -35,6 +40,7 @@ export interface FunctionRequest {
   context?: Record<string, unknown>;
   timeout?: number;
   browserType?: BrowserType;
+  viewport?: ViewportOptions;
 }
 
 export interface FunctionResponse {
@@ -50,6 +56,7 @@ export interface PDFRequest {
   timeout?: number;
   browserType?: BrowserType;
   gotoOptions?: GotoOptions;
+  viewport?: ViewportOptions;
 }
 
 export interface PDFOptions {
@@ -79,6 +86,7 @@ export interface ScreenshotRequest {
   timeout?: number;
   browserType?: BrowserType;
   gotoOptions?: GotoOptions;
+  viewport?: ViewportOptions;
 }
 
 export interface ScreenshotOptions {
@@ -102,6 +110,7 @@ export interface ScrapeRequest {
   browserType?: BrowserType;
   gotoOptions?: GotoOptions;
   waitForSelector?: string;
+  viewport?: ViewportOptions;
 }
 
 export interface ScrapeElement {
@@ -120,6 +129,7 @@ export interface ContentRequest {
   timeout?: number;
   browserType?: BrowserType;
   gotoOptions?: GotoOptions;
+  viewport?: ViewportOptions;
 }
 
 export interface HealthStatus {

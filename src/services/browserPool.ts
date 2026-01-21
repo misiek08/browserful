@@ -1,6 +1,6 @@
 import { chromium, firefox, Browser, BrowserContext, Page } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
-import type { BrowserType, BrowserInstance, PoolConfig, QueuedTask } from '../types/index.js';
+import type { BrowserType, BrowserInstance, PoolConfig, QueuedTask, ViewportOptions } from '../types/index.js';
 import { getPoolConfig, getServerConfig } from '../utils/config.js';
 import logger from '../utils/logger.js';
 import { BrowserUnavailableError, TimeoutError } from '../middleware/errorHandler.js';
@@ -163,7 +163,11 @@ class BrowserPool {
     return null;
   }
 
-  async acquire(type: BrowserType = 'chromium', timeout?: number): Promise<BrowserResource> {
+  async acquire(
+    type: BrowserType = 'chromium',
+    timeout?: number,
+    viewport?: ViewportOptions
+  ): Promise<BrowserResource> {
     if (this.isShuttingDown) {
       throw new BrowserUnavailableError('Pool is shutting down');
     }
@@ -181,7 +185,7 @@ class BrowserPool {
     // Try to get an available browser immediately
     const browser = await this.getAvailableBrowser(type);
     if (browser) {
-      return this.createResource(browser);
+      return this.createResource(browser, viewport);
     }
 
     // Queue the request and wait
@@ -193,6 +197,9 @@ class BrowserPool {
         browserType: type,
         createdAt: new Date(),
       };
+
+      // Store viewport for when task is processed
+      (task as any).viewport = viewport;
 
       this.queue.push(task);
       logger.debug({ taskId: task.id, queueLength: this.queue.length }, 'Task queued');
@@ -211,12 +218,20 @@ class BrowserPool {
     });
   }
 
-  private async createResource(instance: BrowserInstance): Promise<BrowserResource> {
+  private async createResource(
+    instance: BrowserInstance,
+    viewport?: ViewportOptions
+  ): Promise<BrowserResource> {
     instance.inUse = true;
     instance.lastUsed = new Date();
 
+    const effectiveViewport = {
+      width: viewport?.width || 1920,
+      height: viewport?.height || 1080,
+    };
+
     const context = await instance.browser.newContext({
-      viewport: { width: 1920, height: 1080 },
+      viewport: effectiveViewport,
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     });
 
@@ -251,7 +266,7 @@ class BrowserPool {
         clearTimeout((task as any).timeoutId);
 
         try {
-          const resource = await this.createResource(browser);
+          const resource = await this.createResource(browser, (task as any).viewport);
           task.resolve(resource);
         } catch (error) {
           task.reject(error as Error);

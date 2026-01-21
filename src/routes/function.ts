@@ -3,7 +3,7 @@ import { browserPool } from '../services/browserPool.js';
 import { ValidationError } from '../middleware/errorHandler.js';
 import { getServerConfig } from '../utils/config.js';
 import logger from '../utils/logger.js';
-import type { FunctionRequest, BrowserType } from '../types/index.js';
+import type { FunctionRequest, BrowserType, ViewportOptions } from '../types/index.js';
 
 const router = Router();
 
@@ -33,12 +33,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   const browserType: BrowserType = body.browserType || 'chromium';
   const timeout = body.timeout || config.defaultTimeout;
   const userContext = body.context || {};
+  const viewport = body.viewport;
 
   logger.info({ browserType, hasContext: Object.keys(userContext).length > 0 }, 'Function execution requested');
 
   let resource = null;
   try {
-    resource = await browserPool.acquire(browserType, timeout);
+    resource = await browserPool.acquire(browserType, timeout, viewport);
     const { page, context, release } = resource;
 
     // Set page timeout
@@ -111,12 +112,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
   const browserType = (req.query.browserType as BrowserType) || 'chromium';
   const timeout = parseInt(req.query.timeout as string, 10) || config.defaultTimeout;
+  const viewport: ViewportOptions | undefined = req.query.width || req.query.height
+    ? {
+        width: req.query.width ? parseInt(req.query.width as string, 10) : undefined,
+        height: req.query.height ? parseInt(req.query.height as string, 10) : undefined,
+      }
+    : undefined;
 
   logger.info({ browserType }, 'Function execution requested (GET)');
 
   let resource = null;
   try {
-    resource = await browserPool.acquire(browserType, timeout);
+    resource = await browserPool.acquire(browserType, timeout, viewport);
     const { page, context, release } = resource;
 
     page.setDefaultTimeout(timeout);
