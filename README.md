@@ -2,6 +2,8 @@
 
 A lightweight, secure headless browser service. Run Chrome and Firefox in Docker without SYS_ADMIN capabilities or special privileges.
 
+*No warranty provided, contributions welcome.*
+
 ## Features
 
 - **No Special Privileges**: Runs in Docker without `SYS_ADMIN` capabilities or `seccomp:unconfined`
