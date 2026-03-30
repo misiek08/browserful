@@ -1,7 +1,7 @@
 # Browserful Minimal - Chromium only, smallest footprint
 # Runs without SYS_ADMIN capabilities
 
-FROM node:20-alpine
+FROM oven/bun:1-alpine
 
 # Install dependencies for Playwright Chromium
 RUN apk add --no-cache \
@@ -28,19 +28,19 @@ RUN addgroup -S browserful && adduser -S browserful -G browserful \
     && chown -R browserful:browserful /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json bun.lockb* ./
 
 # Install all dependencies (including dev for build)
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 # Copy source
 COPY . .
 
 # Build TypeScript
-RUN npm run build
+RUN bun run build
 
 # Remove dev dependencies to reduce image size
-RUN npm prune --production
+RUN bun install --production
 
 # Fix ownership
 RUN chown -R browserful:browserful /app
@@ -66,4 +66,4 @@ ENV NODE_ENV=production \
     DEFAULT_TIMEOUT=30000 \
     PRE_LAUNCH_BROWSERS=1
 
-CMD ["node", "dist/index.js"]
+CMD ["bun", "dist/index.js"]

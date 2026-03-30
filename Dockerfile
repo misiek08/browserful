@@ -1,7 +1,7 @@
 # Browserful - Lightweight headless browser service
 # Runs without SYS_ADMIN capabilities
 
-FROM node:20-slim
+FROM oven/bun:1-slim
 
 # Install dependencies for Playwright browsers
 # These are the minimal dependencies needed to run Chromium and Firefox
@@ -53,24 +53,24 @@ RUN groupadd -r browserful && useradd -r -g browserful -G audio,video browserful
     && chown -R browserful:browserful /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json bun.lockb* ./
 
 # Install all dependencies (including dev for build)
-RUN npm ci
-
-# Install Playwright browsers (as root, then fix permissions)
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install chromium firefox \
-    && chmod -R 755 /ms-playwright
+RUN bun install --frozen-lockfile
 
 # Copy source
 COPY . .
 
 # Build TypeScript
-RUN npm run build
+RUN bun run build
 
 # Remove dev dependencies to reduce image size
-RUN npm prune --production
+RUN bun install --production
+
+# Install Playwright browsers AFTER production install to ensure version match
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN bunx playwright install chromium firefox \
+    && chmod -R 755 /ms-playwright
 
 # Fix ownership
 RUN chown -R browserful:browserful /app
@@ -83,7 +83,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+    CMD bun -e "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 # Environment defaults
 ENV NODE_ENV=production \
@@ -97,4 +97,4 @@ ENV NODE_ENV=production \
     PRE_LAUNCH_BROWSERS=1
 
 # Start the service
-CMD ["node", "dist/index.js"]
+CMD ["bun", "dist/index.js"]

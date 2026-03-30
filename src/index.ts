@@ -43,7 +43,7 @@ app.get('/metrics', healthRouter);
 app.get('/', (_req, res) => {
   res.json({
     name: 'Browserful',
-    version: process.env.npm_package_version || '1.0.0',
+    version: '1.0.0',
     description: 'Lightweight headless browser service',
     endpoints: {
       '/function': 'Execute JavaScript code in browser context',
