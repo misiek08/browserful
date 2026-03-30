@@ -8,7 +8,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - TOKEN=${BROWSERFUL_TOKEN:-}
+      - TOKEN=${BROWSERFUL_TOKEN:?BROWSERFUL_TOKEN is required}
       - ENABLE_CHROMIUM=true
       - ENABLE_FIREFOX=false
       - MAX_BROWSERS=5
@@ -30,7 +30,7 @@ services:
           memory: 512M
           cpus: '0.5'
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "bun", "-e", "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -47,7 +47,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - TOKEN=${BROWSERFUL_TOKEN:-}
+      - TOKEN=${BROWSERFUL_TOKEN:?BROWSERFUL_TOKEN is required}
       - MAX_BROWSERS=3
       - MAX_CONCURRENT=5
     security_opt:

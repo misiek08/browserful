@@ -98,6 +98,12 @@ async function shutdown(signal: string) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
+// Validate required config
+if (!config.token) {
+  logger.error('TOKEN environment variable is required. Set it to a secret value.');
+  process.exit(1);
+}
+
 // Start server
 const server = app.listen(config.port, config.host, async () => {
   logger.info(`Browserful starting on ${config.host}:${config.port}`);
