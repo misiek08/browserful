@@ -4,6 +4,7 @@ import { ValidationError } from '../middleware/errorHandler.js';
 import { getServerConfig } from '../utils/config.js';
 import logger from '../utils/logger.js';
 import type { BrowserType, ViewportOptions } from '../types/index.js';
+import { wrapPageWithCompat } from '../utils/normalizeWaitUntil.js';
 
 const router = Router();
 
@@ -57,6 +58,9 @@ async function executeFunction(
   try {
     page.setDefaultTimeout(timeout);
 
+    // Wrap page with Puppeteer→Playwright compatibility Proxy
+    const compatPage = wrapPageWithCompat(page);
+
     // Transform ESM export default syntax into an executable function
     // Handles: export default async ({ page, context }) => { ... }
     // and:     export default async function({ page, context }) { ... }
@@ -101,7 +105,7 @@ async function executeFunction(
 
     const fn = new Function('page', 'context', executableCode);
 
-    const resultPromise = fn(page, userContext);
+    const resultPromise = fn(compatPage, userContext);
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Function execution timed out')), timeout);
     });

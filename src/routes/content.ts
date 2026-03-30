@@ -4,6 +4,7 @@ import { ValidationError } from '../middleware/errorHandler.js';
 import { getServerConfig } from '../utils/config.js';
 import logger from '../utils/logger.js';
 import type { ContentRequest, BrowserType, GotoOptions, ViewportOptions } from '../types/index.js';
+import { normalizeWaitUntil } from '../utils/normalizeWaitUntil.js';
 
 const router = Router();
 
@@ -41,7 +42,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     page.setDefaultTimeout(timeout);
 
     await page.goto(body.url, {
-      waitUntil: gotoOptions.waitUntil || 'networkidle',
+      waitUntil: normalizeWaitUntil(gotoOptions.waitUntil) || 'networkidle',
       timeout: gotoOptions.timeout || timeout,
       referer: gotoOptions.referer,
     });

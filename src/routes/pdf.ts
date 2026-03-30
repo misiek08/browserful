@@ -4,6 +4,7 @@ import { ValidationError } from '../middleware/errorHandler.js';
 import { getServerConfig } from '../utils/config.js';
 import logger from '../utils/logger.js';
 import type { PDFRequest, BrowserType, PDFOptions, GotoOptions, ViewportOptions } from '../types/index.js';
+import { normalizeWaitUntil } from '../utils/normalizeWaitUntil.js';
 
 const router = Router();
 
@@ -52,13 +53,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     // Navigate to URL or set HTML content
     if (body.url) {
       await page.goto(body.url, {
-        waitUntil: gotoOptions.waitUntil || 'networkidle',
+        waitUntil: normalizeWaitUntil(gotoOptions.waitUntil) || 'networkidle',
         timeout: gotoOptions.timeout || timeout,
         referer: gotoOptions.referer,
       });
     } else if (body.html) {
       await page.setContent(body.html, {
-        waitUntil: gotoOptions.waitUntil || 'networkidle',
+        waitUntil: normalizeWaitUntil(gotoOptions.waitUntil) || 'networkidle',
         timeout: gotoOptions.timeout || timeout,
       });
     }

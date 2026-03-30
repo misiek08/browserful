@@ -119,7 +119,7 @@ export interface ScrapeElement {
 }
 
 export interface GotoOptions {
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'networkidle0' | 'networkidle2' | 'commit';
   timeout?: number;
   referer?: string;
 }
